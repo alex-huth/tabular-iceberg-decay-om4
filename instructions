@@ -1,0 +1,68 @@
+#Notes for running OM4p5
+
+#-- General setup for OM4 experiments --
+
+## Step 1: Obtain the XML (technically, I already provided/completed this step in the
+##repository, but rebuilding from scratch is recommended):
+git clone https://gitlab.gfdl.noaa.gov/ogrp/xml.git om4_icebergs
+cd om4_icebergs
+#note: this is the version used for the paper.
+#master may differ
+git checkout b498fd9e4f77cbdb297cc00ba0598b0dc3f2bebd
+#Add the Footloose (FL) experiments (60 year spin-up):
+cp ./../FL_xmls/*.xml .
+
+##Correct the XML
+#Edit line <property name="GFDL_GROUP"     value="gfdl_o"/>
+#Add line <property name="JRA_version" value="1-4-0"/>
+
+
+##Step 2: Check XML
+module use -a /ncrc/home2/fms/local/modulefiles
+module load fre/bronx-18
+
+frelist -x OMIP4p5_JRA1.4.xml
+#MOM6_SIS2_compile
+#OM4p5_BLING_JRA55do1.4_cycle1_fmsio INHERITS FROM OM4p5_BLING_JRA55do1.4_cycle1
+#OM4p5_BLING_JRA55do1.4_cycle1 INHERITS FROM MOM6_SIS2_compile
+#OM4p5_BLING_JRA55do1.4_cycle2 INHERITS FROM OM4p5_BLING_JRA55do1.4_cycle1
+
+##Step 3: Checkout source code
+fremake -x OMIP4p5_JRA1.4.xml -p ncrc3.intel18 -t prod MOM6_SIS2_compile
+pushd /lustre/f2/dev/$USER/FMS2019.01.03_mom6_2019.08.08//MOM6_SIS2_compile/src/mom6/src/icebergs
+git remote set-url origin https://github.com/alex-huth/icebergs.git
+git fetch
+git checkout solo-driver
+##(note that in the above we’re overriding what the XML is doing)
+
+##Step 4: Compile executable
+/lustre/f2/dev/$USER/FMS2019.01.03_mom6_2019.08.08//MOM6_SIS2_compile/ncrc3.intel18-prod/exec/compile_MOM6_SIS2_compile.csh
+
+
+#-- Footloose experiments --
+
+##Create a batch script for each run:
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e100_s.5
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e100_s.5_nb
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e10_s.25
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e10_s.1
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod no_footloose
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod gladstone_bigg
+
+##Output will appear on PAN under /archive/$USER/FMS2019.01.03_mom6_2019.08.08/ over time.
+
+#tar and copy restart files to a common restart directory
+## e.g., for experiment e100_s.5:
+cd /lustre/f2/scratch/$USER/work/FMS2019.01.03_mom6_2019.08.08/e100_s.5.o205238285/RESTART
+tar cvf /lustre/f2/dev/$USER/restarts/e100_s.5.tar *.res.* *.res_*
+
+##The tarfile can be referred to in the XML for initCond
+
+#Footloose (FL) experiments (60 years, after spin-up):
+##Create a batch script for each experiment, and run:
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e100_s.5_r
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e100_s.5_nb_r
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e10_s.25_r
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod e10_s.1_r
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod no_footloose_r
+frerun -x OMIP4p5_JRA1.4_FL.xml -p ncrc3.intel18 -t prod gladstone_bigg_r

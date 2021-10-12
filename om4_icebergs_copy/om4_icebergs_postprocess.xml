@@ -1,0 +1,22 @@
+<outer xmlns:xi="http://www.w3.org/2003/XInclude">
+<!-- iceberg post-processing for footloose experiments-->
+<freInclude name="icebergs_postprocess_fl">
+   <postProcess>
+      <component type="icebergs_monthly"   start="$(PP_START_YEAR)" source="iceberg_month" sourceGrid="ocean-tripolar" cmip="on">
+        <timeSeries freq="monthly" chunkLength="$(CHUNK_LENGTH_A)">
+          <variables>
+            area                mask                melt                sst                 cn
+            melt_buoy           melt_eros           melt_conv           bergy_src           bergy_melt
+            bergy_mass          virtual_area        mass                unused_calving
+            accum_calving       real_calving        stored_ice          calving             fl_bits_src
+            fl_bits_melt        fl_bits_mass        melt_buoy_fl        melt_eros_fl        melt_conv_fl
+            melt_by_class       fl_parent_melt      fl_child_melt       fl_bergy_bits_mass
+            uo                  vo                  ui                  vi                  ua
+            va
+          </variables>
+        </timeSeries>
+        <timeAverage source="annual" interval="$(CHUNK_LENGTH_A)"/>
+      </component>
+  </postProcess>
+</freInclude>
+</outer>
